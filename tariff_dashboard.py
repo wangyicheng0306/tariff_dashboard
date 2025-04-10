@@ -73,10 +73,13 @@ def analyze_articles(articles, clients):
 # -------------------- FUNCTION: Scheduled Task -------------------- #
 def scheduled_task():
     all_results = []
+    st.write("🔍 正在抓取新闻...")
     for lang in selected_languages:
         for keyword in search_keywords.split():
             news = fetch_news(keyword, lang)
+            st.write(f"📦 {lang} 语言关键词【{keyword}】共抓取 {len(news)} 条新闻")
             analysis = analyze_articles(news, st.session_state.clients)
+            st.write(f"✅ 识别到 {len(analysis)} 条与客户相关的新闻")
             all_results.extend(analysis)
 
     if all_results:
@@ -84,6 +87,9 @@ def scheduled_task():
             "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "results": all_results
         })
+    else:
+        st.warning("❗没有识别出任何客户相关内容，建议检查关键词或客户名称是否能匹配新闻正文")
+
 
 # -------------------- UI: Main Page -------------------- #
 st.title("📊 关税新闻智能分析系统")
