@@ -17,8 +17,8 @@ if "history" not in st.session_state:
 
 # -------------------- SIDEBAR -------------------- #
 st.sidebar.title("设置 Settings")
-search_keywords = st.sidebar.text_input("关键词（多个语言，以空格分隔）", "2025 关税 贸易战 特朗普")
-selected_languages = st.sidebar.multiselect("语言选择", LANGUAGE_OPTIONS, default=["zh", "en"])
+search_keywords = st.sidebar.text_input("关键词（多个语言，以空格分隔）", "2025 tariff")
+selected_languages = st.sidebar.multiselect("语言选择", LANGUAGE_OPTIONS, default=["zh", "en", "ja", "es"])
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 客户列表")
@@ -47,7 +47,7 @@ def fetch_news(query, language, page_size=20):
     else:
         return []
 
-# -------------------- FUNCTION: Analyze Impact -------------------- #
+# -------------------- FUNCTION: Analyze Impact (improved matching) -------------------- #
 def analyze_articles(articles, clients):
     results = []
     for article in articles:
@@ -56,18 +56,25 @@ def analyze_articles(articles, clients):
         content = (title or "") + " " + (description or "")
         url = article.get("url", "")
         published_at = article.get("publishedAt", "")
-        matched_clients = [client for client in clients if client.lower() in content.lower()]
 
-        for client in matched_clients:
-            impact = "业务冲击" if "suspend" in content.lower() or "delay" in content.lower() else                      "盈利预警" if "profit" in content.lower() or "earnings" in content.lower() else                      "股价影响" if "stock" in content.lower() or "share price" in content.lower() else "未分类"
+        for client in clients:
+            name_variants = [
+                client,
+                client + " Corporation",
+                client + " Group",
+                client.replace(" ", "").lower(),
+            ]
 
-            results.append({
-                "时间": published_at,
-                "客户": client,
-                "影响": impact,
-                "标题": title,
-                "链接": url
-            })
+            if any(variant.lower() in content.lower() for variant in name_variants) or                all(word.lower() in content.lower() for word in client.lower().split()):
+                impact = "业务冲击" if "suspend" in content.lower() or "delay" in content.lower() else                          "盈利预警" if "profit" in content.lower() or "earnings" in content.lower() else                          "股价影响" if "stock" in content.lower() or "share price" in content.lower() else "未分类"
+
+                results.append({
+                    "时间": published_at,
+                    "客户": client,
+                    "影响": impact,
+                    "标题": title,
+                    "链接": url
+                })
     return results
 
 # -------------------- FUNCTION: Scheduled Task -------------------- #
@@ -89,7 +96,6 @@ def scheduled_task():
         })
     else:
         st.warning("❗没有识别出任何客户相关内容，建议检查关键词或客户名称是否能匹配新闻正文")
-
 
 # -------------------- UI: Main Page -------------------- #
 st.title("📊 关税新闻智能分析系统")

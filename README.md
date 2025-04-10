@@ -8,6 +8,7 @@ This Streamlit app automatically fetches news articles related to the 2025 US ta
 - Customizable client list
 - Categorized impact: business / earnings / stock
 - Historical tracking and result visualization
+- Improved keyword matching for clients (partial and alias match)
 
 ## Usage
 
